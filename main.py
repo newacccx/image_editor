@@ -13,7 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Your API ID, API Hash, and Bot Token
-API_ID = int(os.getenv("API_ID"))
+API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -22,6 +22,9 @@ if not all([API_ID, API_HASH, BOT_TOKEN]):
     logger.error("One or more environment variables are missing: API_ID, API_HASH, BOT_TOKEN")
     raise EnvironmentError("One or more environment variables are missing")
 
+# Convert API_ID to integer
+API_ID = int(API_ID)
+
 # Create a new Client instance
 app = Client("image_text_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
@@ -29,9 +32,11 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     draw = ImageDraw.Draw(image)
     font = ImageFont.load_default()
     width, height = image.size
+    logger.info(f"Image size: width={width}, height={height}")
     text_bbox = draw.textbbox((0, 0), text, font=font)
     text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
     position = ((width - text_width) // 2, (height - text_height) // 2)
+    logger.info(f"Text position: {position}, Text size: width={text_width}, height={text_height}")
     draw.text(position, text, font=font, fill='white')
     return image
 
@@ -44,11 +49,10 @@ async def start(client, message: Message):
 async def handle_photo(client, message: Message):
     try:
         logger.info("Photo message received")
-        photo = message.photo[-1]
-        photo_file = await client.download_media(photo)
-        logger.info(f"Photo downloaded to {photo_file}")
+        photo = await message.download()  # Download the highest quality photo
+        logger.info(f"Photo downloaded to {photo}")
         
-        image = Image.open(photo_file)
+        image = Image.open(photo)
         text = "Sample Text"
 
         modified_image = add_text_to_image(image, text)
