@@ -1,7 +1,7 @@
 {
   "name": "Telegram Image Text Bot",
-  "description": "A Telegram bot that adds text to images automatically",
+  "description": "A Telegram bot that adds text to images automatically using Pyrogram",
   "repository": "https://github.com/newacccx/image_editor",
-  "keywords": ["telegram", "bot", "image", "text"],
+  "keywords": ["telegram", "bot", "image", "text", "pyrogram"],
   "addons": ["heroku-postgresql"]
 }
