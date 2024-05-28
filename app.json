@@ -1,0 +1,7 @@
+{
+  "name": "Telegram Image Text Bot",
+  "description": "A Telegram bot that adds text to images automatically",
+  "repository": "https://github.com/yourusername/telegram-image-text-bot",
+  "keywords": ["telegram", "bot", "image", "text"],
+  "addons": ["heroku-postgresql"]
+}
