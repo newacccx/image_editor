@@ -30,7 +30,11 @@ app = Client("image_text_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_T
 
 def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     draw = ImageDraw.Draw(image)
-    font = ImageFont.load_default()
+    # Use a TTF font with a specific size
+    font_path = "Arial.ttf"
+    font_size = 50  # Adjust font size as needed
+    font = ImageFont.truetype(font_path, font_size)
+    
     width, height = image.size
     logger.info(f"Image size: width={width}, height={height}")
     
