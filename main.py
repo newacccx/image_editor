@@ -30,26 +30,27 @@ app = Client("image_text_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_T
 
 def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     draw = ImageDraw.Draw(image)
-    # Use the DejaVuSans font which is included with Pillow
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    font_size = 50  # Adjust font size as needed
+    font_size = 52
     try:
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
         logger.error(f"Font file not found: {font_path}")
         raise
-    
-    width, height = image.size
-    logger.info(f"Image size: width={width}, height={height}")
-    
-    text_bbox = draw.textbbox((0, 0), text, font=font)
-    text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
-    position = ((width - text_width) // 2, (height - text_height) // 2)
-    logger.info(f"Text position: {position}, Text size: width={text_width}, height={text_height}")
 
+    width, height = image.size
+    text_width, text_height = draw.textsize(text, font=font)
+    
+    # Calculate position for bottom-center alignment
+    x = (width - text_width) // 2
+    y = height - text_height - 10  # Offset from bottom, adjust as needed
+
+    # Draw a black rectangle as background for text
+    text_background = Image.new('RGBA', (width, text_height + 20), (0, 0, 0, 200))
+    image.paste(text_background, (0, height - text_height - 20))
+    
     # Draw text on the image
-    draw.text(position, text, font=font, fill='white')
-    logger.info(f"Text '{text}' drawn on the image at position {position}")
+    draw.text((x, y), text, font=font, fill='white')
     
     return image
 
