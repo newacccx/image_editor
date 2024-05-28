@@ -33,11 +33,16 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     font = ImageFont.load_default()
     width, height = image.size
     logger.info(f"Image size: width={width}, height={height}")
+    
     text_bbox = draw.textbbox((0, 0), text, font=font)
     text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
     position = ((width - text_width) // 2, (height - text_height) // 2)
     logger.info(f"Text position: {position}, Text size: width={text_width}, height={text_height}")
+
+    # Draw text on the image
     draw.text(position, text, font=font, fill='white')
+    logger.info(f"Text '{text}' drawn on the image at position {position}")
+    
     return image
 
 @app.on_message(filters.command("start"))
