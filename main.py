@@ -1,8 +1,8 @@
-import logging
-from telegram import Update, Bot
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from PIL import Image, ImageDraw, ImageFont
 import io
+import logging
+from pyrogram import Client, filters
+from pyrogram.types import Message
+from PIL import Image, ImageDraw, ImageFont
 
 # Enable logging
 logging.basicConfig(
@@ -11,11 +11,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Your Telegram Bot Token
-TOKEN = '6153579279:AAEyzLHm9p8L8t0M7kn40TnhGYOlu3jI3jY'
+# Your API ID, API Hash, and Bot Token
+API_ID = '6381607'
+API_HASH = '9799ad1623afe9bad664501f984b71fe'
+BOT_TOKEN = '6153579279:AAEyzLHm9p8L8t0M7kn40TnhGYOlu3jI3jY'
 
-def start(update: Update, context: CallbackContext) -> None:
-    update.message.reply_text('Hi! Send me a photo and I will add text to it.')
+# Create a new Client instance
+app = Client("image_text_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     draw = ImageDraw.Draw(image)
@@ -26,11 +28,15 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     draw.text(position, text, font=font, fill='white')
     return image
 
-def handle_photo(update: Update, context: CallbackContext) -> None:
-    user = update.message.from_user
-    photo_file = update.message.photo[-1].get_file()
-    photo_bytes = photo_file.download_as_bytearray()
-    image = Image.open(io.BytesIO(photo_bytes))
+@app.on_message(filters.command("start"))
+async def start(client, message: Message):
+    await message.reply_text('Hi! Send me a photo and I will add text to it.')
+
+@app.on_message(filters.photo)
+async def handle_photo(client, message: Message):
+    photo = message.photo
+    photo_file = await client.download_media(photo)
+    image = Image.open(photo_file)
     text = "Sample Text"
 
     modified_image = add_text_to_image(image, text)
@@ -39,17 +45,7 @@ def handle_photo(update: Update, context: CallbackContext) -> None:
     modified_image.save(bio, 'PNG')
     bio.seek(0)
 
-    update.message.reply_photo(photo=bio)
+    await message.reply_photo(photo=bio)
 
-def main() -> None:
-    updater = Updater(TOKEN)
-    dispatcher = updater.dispatcher
-
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(MessageHandler(Filters.photo, handle_photo))
-
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    app.run()
