@@ -46,18 +46,16 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     x = (width - text_width) // 2
     y = height - text_height - 10  # Offset from bottom, adjust as needed
 
-    # Calculate background size and position
-    bg_width = text_width + 20  # Add padding
-    bg_height = text_height + 20  # Add padding
-    bg_x = (width - bg_width) // 2
-    bg_y = height - text_height - 30  # Adjust vertical position as needed
+    # Create a new image with a transparent background
+    bg_image = Image.new('RGBA', (text_width + 20, text_height + 20), (0, 0, 0, 0))
+    bg_draw = ImageDraw.Draw(bg_image)
 
-    # Draw background rectangle
-    draw.rectangle([(bg_x, bg_y), (bg_x + bg_width, bg_y + bg_height)], fill='black')
+    # Draw text on the background image
+    bg_draw.text((10, 10), text, font=font, fill='white')
 
-    # Draw text on the image
-    draw.text((x, y), text, font=font, fill='white')
-    
+    # Paste the background image onto the original image
+    image.paste(bg_image, (x, y), bg_image)
+
     return image
 
 @app.on_message(filters.command("start"))
