@@ -38,19 +38,23 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
         logger.error(f"Font file not found: {font_path}")
         raise
 
-    width, height = image.size
-    
-    # Calculate text size using textbbox
-    text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:]
+    # Calculate text size
+    text_width, text_height = draw.textsize(text, font=font)
     
     # Calculate position for bottom-center alignment
+    width, height = image.size
     x = (width - text_width) // 2
     y = height - text_height - 10  # Offset from bottom, adjust as needed
 
-    # Draw a black rectangle as background for text
-    text_background = Image.new('RGBA', (width, text_height + 20), (0, 0, 0, 200))
-    image.paste(text_background, (0, height - text_height - 20))
-    
+    # Calculate background size and position
+    bg_width = text_width + 20  # Add padding
+    bg_height = text_height + 20  # Add padding
+    bg_x = (width - bg_width) // 2
+    bg_y = height - text_height - 30  # Adjust vertical position as needed
+
+    # Draw background rectangle
+    draw.rectangle([(bg_x, bg_y), (bg_x + bg_width, bg_y + bg_height)], fill='black')
+
     # Draw text on the image
     draw.text((x, y), text, font=font, fill='white')
     
