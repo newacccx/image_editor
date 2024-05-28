@@ -13,9 +13,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Your API ID, API Hash, and Bot Token
-API_ID = int(os.getenv("6381607"))
-API_HASH = os.getenv("9799ad1623afe9bad664501f984b71fe")
-BOT_TOKEN = os.getenv("6153579279:AAEyzLHm9p8L8t0M7kn40TnhGYOlu3jI3jY")
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# Ensure that all necessary environment variables are set
+if not all([API_ID, API_HASH, BOT_TOKEN]):
+    logger.error("One or more environment variables are missing: API_ID, API_HASH, BOT_TOKEN")
+    raise EnvironmentError("One or more environment variables are missing")
 
 # Create a new Client instance
 app = Client("image_text_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
