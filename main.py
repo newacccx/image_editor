@@ -4,6 +4,7 @@ import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from PIL import Image, ImageDraw, ImageFont
+import cv2
 
 # Enable logging
 logging.basicConfig(
@@ -29,32 +30,31 @@ API_ID = int(API_ID)
 app = Client("image_text_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
-    draw = ImageDraw.Draw(image)
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
     font_size = 52
-    try:
-        font = ImageFont.truetype(font_path, font_size)
-    except IOError:
-        logger.error(f"Font file not found: {font_path}")
-        raise
+    font = ImageFont.truetype(font_path, font_size)
 
-    # Calculate text size
-    text_width, text_height = draw.textsize(text, font=font)
+    # Convert PIL image to OpenCV format
+    cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+
+    # Get text size using OpenCV
+    (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2)
     
     # Calculate position for bottom-center alignment
     width, height = image.size
     x = (width - text_width) // 2
     y = height - text_height - 10  # Offset from bottom, adjust as needed
 
-    # Create a new image with a transparent background
-    bg_image = Image.new('RGBA', (text_width + 20, text_height + 20), (0, 0, 0, 0))
-    bg_draw = ImageDraw.Draw(bg_image)
+    # Draw background rectangle using PIL
+    draw = ImageDraw.Draw(image)
+    bg_width = text_width + 20  # Add padding
+    bg_height = text_height + 20  # Add padding
+    bg_x = (width - bg_width) // 2
+    bg_y = height - text_height - 30  # Adjust vertical position as needed
+    draw.rectangle([(bg_x, bg_y), (bg_x + bg_width, bg_y + bg_height)], fill='black')
 
-    # Draw text on the background image
-    bg_draw.text((10, 10), text, font=font, fill='white')
-
-    # Paste the background image onto the original image
-    image.paste(bg_image, (x, y), bg_image)
+    # Draw text using PIL
+    draw.text((x, y), text, font=font, fill='white')
 
     return image
 
