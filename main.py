@@ -39,7 +39,9 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
         raise
 
     width, height = image.size
-    text_width, text_height = draw.textsize(text, font=font)
+    
+    # Calculate text size using textbbox
+    text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:]
     
     # Calculate position for bottom-center alignment
     x = (width - text_width) // 2
