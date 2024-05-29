@@ -4,7 +4,6 @@ import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from PIL import Image, ImageDraw, ImageFont
-import cv2
 
 # Enable logging
 logging.basicConfig(
@@ -30,32 +29,31 @@ API_ID = int(API_ID)
 app = Client("image_text_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
+    draw = ImageDraw.Draw(image)
     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
     font_size = 52
-    font = ImageFont.truetype(font_path, font_size)
+    try:
+        font = ImageFont.truetype(font_path, font_size)
+    except IOError:
+        logger.error(f"Font file not found: {font_path}")
+        raise
 
-    # Convert PIL image to OpenCV format
-    cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-
-    # Get text size using OpenCV
-    (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, fontScale=1, thickness=2)
+    width, height = image.size
+    
+    # Calculate text size using textbbox
+    text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:]
     
     # Calculate position for bottom-center alignment
-    width, height = image.size
     x = (width - text_width) // 2
     y = height - text_height - 10  # Offset from bottom, adjust as needed
 
-    # Draw background rectangle using PIL
-    draw = ImageDraw.Draw(image)
-    bg_width = text_width + 20  # Add padding
-    bg_height = text_height + 20  # Add padding
-    bg_x = (width - bg_width) // 2
-    bg_y = height - text_height - 30  # Adjust vertical position as needed
-    draw.rectangle([(bg_x, bg_y), (bg_x + bg_width, bg_y + bg_height)], fill='black')
-
-    # Draw text using PIL
+    # Draw a black rectangle as background for text
+    text_background = Image.new('RGBA', (width, text_height + 20), (0, 0, 0, 200))
+    image.paste(text_background, (0, height - text_height - 20))
+    
+    # Draw text on the image
     draw.text((x, y), text, font=font, fill='white')
-
+    
     return image
 
 @app.on_message(filters.command("start"))
@@ -71,7 +69,7 @@ async def handle_photo(client, message: Message):
         logger.info(f"Photo downloaded to {photo}")
         
         image = Image.open(photo)
-        text = "Sample Text"
+        text = "Telegram-@HDCINEMA_1"
 
         modified_image = add_text_to_image(image, text)
         bio = io.BytesIO()
