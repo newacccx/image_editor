@@ -74,7 +74,7 @@ async def handle_photo(client, message: Message):
         logger.info(f"Photo downloaded to {photo}")
         
         image = Image.open(photo)
-        text = "Sample Text"
+        text = "Telegram-@HDCINEMA_1"
 
         modified_image = add_text_to_image(image, text)
         bio = io.BytesIO()
