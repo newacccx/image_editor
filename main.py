@@ -4,6 +4,8 @@ import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from PIL import Image, ImageDraw, ImageFont
+import requests
+from io import BytesIO
 
 # Enable logging
 logging.basicConfig(
@@ -41,15 +43,17 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     width, height = image.size
     
     # Calculate text size using textbbox
-    text_width, text_height = draw.textbbox((0, 0), text, font=font)[2:]
+    text_bbox = draw.textbbox((0, 0), text, font=font)
+    text_width, text_height = text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1]
     
     # Calculate position for bottom-center alignment
     x = (width - text_width) // 2
     y = height - text_height - 10  # Offset from bottom, adjust as needed
 
     # Draw a black rectangle as background for text
-    text_background = Image.new('RGBA', (width, text_height + 20), (0, 0, 0, 200))
-    image.paste(text_background, (0, height - text_height - 20))
+    padding = 10
+    text_background = Image.new('RGBA', (text_width + 2 * padding, text_height + 2 * padding), (0, 0, 0, 200))
+    image.paste(text_background, (x - padding, y - padding), text_background)
     
     # Draw text on the image
     draw.text((x, y), text, font=font, fill='white')
@@ -58,17 +62,40 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
 
 @app.on_message(filters.command("start"))
 async def start(client, message: Message):
-    await message.reply_text('Hi! Send me a photo and I will add text to it.')
+    await message.reply_text('Hi! Send me a photo or a photo link and I will add text to it.')
     logger.info("Start command received")
 
 @app.on_message(filters.photo)
 async def handle_photo(client, message: Message):
     try:
         logger.info("Photo message received")
+        processing_message = await message.reply_text("Processing...")
         photo = await message.download()  # Download the highest quality photo
         logger.info(f"Photo downloaded to {photo}")
         
         image = Image.open(photo)
+        text = "Sample Text"
+
+        modified_image = add_text_to_image(image, text)
+        bio = io.BytesIO()
+        bio.name = 'image.png'
+        modified_image.save(bio, 'PNG')
+        bio.seek(0)
+
+        await client.send_photo(chat_id=message.chat.id, photo=bio)
+        await processing_message.delete()
+        logger.info("Photo sent back to user")
+    except Exception as e:
+        logger.error(f"Error handling photo: {e}")
+        await message.reply_text('An error occurred while processing your photo.')
+
+@app.on_message(filters.text & filters.regex(r'^https?://'))
+async def handle_photo_link(client, message: Message):
+    try:
+        logger.info("Photo link received")
+        processing_message = await message.reply_text("Processing...")
+        response = requests.get(message.text)
+        image = Image.open(BytesIO(response.content))
         text = "Telegram-@HDCINEMA_1"
 
         modified_image = add_text_to_image(image, text)
@@ -77,11 +104,12 @@ async def handle_photo(client, message: Message):
         modified_image.save(bio, 'PNG')
         bio.seek(0)
 
-        await message.reply_photo(photo=bio)
+        await client.send_photo(chat_id=message.chat.id, photo=bio)
+        await processing_message.delete()
         logger.info("Photo sent back to user")
     except Exception as e:
-        logger.error(f"Error handling photo: {e}")
-        await message.reply_text('An error occurred while processing your photo.')
+        logger.error(f"Error handling photo link: {e}")
+        await message.reply_text('An error occurred while processing the photo link.')
 
 if __name__ == "__main__":
     app.run()
