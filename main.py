@@ -6,6 +6,7 @@ from pyrogram.types import Message
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
+from dotenv import load_dotenv
 
 # Enable logging
 logging.basicConfig(
@@ -14,7 +15,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Your API ID, API Hash, and Bot Token
+# Load environment variables from .env file
+load_dotenv()
+
+# Fetch environment variables
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -33,7 +37,10 @@ app = Client("image_text_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_T
 def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     draw = ImageDraw.Draw(image)
     font_path = "fonts/LiberationSerif-Regular.ttf"
-    font_size = 55
+    
+    # Calculate font size based on image size
+    image_width, image_height = image.size
+    font_size = int(image_width / 15)  # Adjust divisor for font size scaling
     try:
         font = ImageFont.truetype(font_path, font_size)
     except IOError:
@@ -48,7 +55,7 @@ def add_text_to_image(image: Image.Image, text: str) -> Image.Image:
     
     # Calculate position for bottom-center alignment
     x = (width - text_width) // 2
-    y = height - text_height - 10  # Offset from bottom, adjust as needed
+    y = height - text_height - 20  # Offset from bottom, adjust as needed
 
     # Draw a black rectangle as background for text
     padding = 10
